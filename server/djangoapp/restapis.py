@@ -2,6 +2,7 @@
 # import requests
 import os
 from dotenv import load_dotenv
+import requests
 
 load_dotenv()
 
@@ -17,16 +18,27 @@ def get_request(endpoint, **kwargs):
         for key,value in kwargs.items():
             params=params+key+"="+value+"&"
 
-    request_url = backend_url+endpoint+"?"+params
-
+    # Construct the full URL
+    if params:
+        request_url = f"{backend_url}{endpoint}?{params}"
+    else:
+        request_url = f"{backend_url}{endpoint}"
+        
     print("GET from {} ".format(request_url))
     try:
         # Call get method of requests library with URL and parameters
         response = requests.get(request_url)
+        response.raise_for_status()  # Raise an HTTPError for bad responses
         return response.json()
-    except:
-        # If any error occurs
-        print("Network exception occurred")
+    except requests.exceptions.RequestException as e:
+        # If any requests-related error occurs
+        print(f"Network exception occurred: {e}")
+    except ValueError as e:
+        # If JSON decoding fails
+        print(f"JSON decoding error: {e}")
+    except Exception as e:
+        # For any other exceptions
+        print(f"An unexpected error occurred: {e}")
 
 def analyze_review_sentiments(text):
     request_url = sentiment_analyzer_url+"analyze/"+text
